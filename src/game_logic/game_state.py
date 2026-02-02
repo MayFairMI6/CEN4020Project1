@@ -104,16 +104,18 @@ class GameState:
                 self.score -= 1
             
         #In lv 2 I gotta pay attention to current num
-        else:
-            last_action = self.move_history.get_action(self.current_num)
-            penult_action = self.move_history.get_action(self.current_num - 1)
+        elif self.current_num > 2:
+            #Current number is ahead of it's previous action by 1
+            #Accounting for array starting at 0, previous action is current num - 2
+            last_action = self.move_history.get_action(self.current_num - 2)
+            penult_action = self.move_history.get_action(self.current_num - 3)
             
-            last_action.edit_outer_pos((-1, -1))
             self.outer_ring[last_action.outer_pos] = 0
+            last_action.edit_outer_pos((-1, -1))
             self.current_num -= 1
             self.last_pos = (penult_action.inner_pos_x, penult_action.inner_pos_y)
             
-            self.move_history.print_history()
+            print(self.outer_ring)
     
     def clear():
         pass
