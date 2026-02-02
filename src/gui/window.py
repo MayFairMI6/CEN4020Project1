@@ -5,6 +5,12 @@ import sys
 from .board_renderer import BoardRenderer
 from .colors import *
 
+#sound effects for User Story 2 and 6
+pygame.mixer.init(44100, -16, 2, 2048)
+
+valid_sound = pygame.mixer.Sound("Sprint1Story2.wav")
+invalid_sound = pygame.mixer.Sound("Sprint1Story6.wav")
+
 
 class Button:
     def __init__(self, x, y, width, height, text, font):
@@ -158,15 +164,18 @@ class GameWindow:
         
         if success:
             #placeholder for sound (story 2)
-            pass
+            valid_sound.play()
         else:
             #placeholder for error sound (story 6)
             if error == "out_of_bounds":
                 self.show_message("Cell is out of bounds!")
+                invalid_sound.play()
             elif error == "cell_occupied":
                 self.show_message("Cell is already occupied!")
+                invalid_sound.play()
             elif error == "not_adjacent":
                 self.show_message("Must be adjacent to previous number!")
+                invalid_sound.play()
                 
     def _handle_level2_click(self, cell):
         ring_row, ring_col = cell
@@ -180,15 +189,18 @@ class GameWindow:
         
         if success:
             #placeholder for sound (story 2)
-            pass
+            valid_sound.play()
         else:
             #placeholder for error sound (story 6)
             if error == "not_ring_cell":
                 self.show_message("Click on the outer ring!")
+                invalid_sound.play()
             elif error == "cell_occupied":
                 self.show_message("Cell is already occupied!")
+                invalid_sound.play()
             elif error == "invalid_position":
                 self.show_message("Invalid position for this number!")
+                invalid_sound.play()
                 
     def _update(self):
         #update game state
