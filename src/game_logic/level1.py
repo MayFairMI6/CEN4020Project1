@@ -56,7 +56,7 @@ class Level1Logic:
         #update state
         self.state.last_pos = (row, col)
         self.state.current_num += 1
-        self.state.record(row, col, scored)
+        self.state.move_history.record_action_lv1(row, col, scored)
         
         #check win condition
         if self.state.current_num > 25:

@@ -140,10 +140,12 @@ class GameWindow:
             return
         
         #Should add undo functionality for lv1 by Sunday
-        if self.btn_undo.is_clicked(mouse_pos):
+        if self.btn_undo.is_clicked(mouse_pos) and self.game_state.current_num != 1:
             self.game_state.undo()
         
         #Will add clear functionality here later
+        if self.btn_clear.is_clicked(mouse_pos):
+            pass
         
         #check board click
         if self.game_state.win:
@@ -212,6 +214,9 @@ class GameWindow:
         #check for level transition
         if self.game_state.level == 1 and self.game_state.win:
             self._transition_to_level2()
+        
+        #self.btn_undo.readonly = self.game_state.current_num == 1
+        
             
     def _transition_to_level2(self):
         #save completed level 1 board

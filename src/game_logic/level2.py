@@ -101,6 +101,7 @@ class Level2Logic:
         
         #update state
         self.state.last_pos = pos
+        self.state.move_history.record_outer_action(self.state.current_num - 1, pos)
         self.state.current_num += 1
         
         #check win condition (all 24 cells filled = numbers 2-25 placed)
