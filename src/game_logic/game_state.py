@@ -11,27 +11,46 @@ class GameState:
         self.current_num = 1                                #next number to place
         self.score = 0                                      #player score
         self.last_pos = None                                #position of last placed number
+        self.original_one_pos = None                        #original position of "1" for clear functionality
         self.game_over = False                              #game over flag
         self.win = False
         self.move_history = History()
     
-    def reset_level1(self):   #reset for a new level 1 game
+    def reset_level1(self):   #reset for a new level 1 game (keeps "1" in original position per story 4)
         self.level = 1
         self.board = [[0 for _ in range(5)] for _ in range(5)]
         self.outer_ring = {}
-        self.current_num = 1
         self.score = 0
-        self.last_pos = None
         self.game_over = False
         self.win = False
         self.move_history.clear_history()
         
+        #restore "1" to its original position (story 4 requirement)
+        if self.original_one_pos:
+            row, col = self.original_one_pos
+            self.board[row][col] = 1
+            self.last_pos = self.original_one_pos
+            self.move_history.record_action_lv1(row, col, False)
+            self.current_num = 2
+        else:
+            self.current_num = 1
+            self.last_pos = None
+        
     def start_level1_with_random_one(self):   #place number 1 randomly for level 1 start (story 1 requirement)
-        self.reset_level1()
+        self.level = 1
+        self.board = [[0 for _ in range(5)] for _ in range(5)]
+        self.outer_ring = {}
+        self.score = 0
+        self.game_over = False
+        self.win = False
+        self.move_history.clear_history()
+        
+        #place "1" randomly and save original position
         row = random.randint(0, 4)
         col = random.randint(0, 4)
         self.board[row][col] = 1
         self.last_pos = (row, col)
+        self.original_one_pos = (row, col)   #save for clear functionality (story 4)
         self.move_history.record_action_lv1(row, col, False)
         self.current_num = 2
         
