@@ -145,7 +145,10 @@ class GameWindow:
         
         #Will add clear functionality here later
         if self.btn_clear.is_clicked(mouse_pos):
-            pass
+            if self.game_state.level == 1:
+                self.game_state.reset_level1()
+            else:
+                self.game_state.reset_lv2()
         
         #check board click
         if self.game_state.win:

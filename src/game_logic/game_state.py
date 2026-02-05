@@ -114,11 +114,10 @@ class GameState:
             last_action.edit_outer_pos((-1, -1))
             self.current_num -= 1
             self.last_pos = (penult_action.inner_pos_x, penult_action.inner_pos_y)
-            
-            print(self.outer_ring)
     
-    def clear():
-        pass
+    def reset_lv2(self):
+        for i in range(self.current_num - 1):
+            self.undo()
             
 class History:
     def __init__(self):
@@ -129,11 +128,6 @@ class History:
         new_action.record_lv1(x, y, scored)
         self.arr.append(new_action)
     
-    def record_action_lv2(self, x, y, outer):
-        new_action = Action()
-        new_action.record_lv2(x, y, outer)
-        self.arr.append(new_action)
-    
     def record_outer_action(self, index, outer):
         self.arr[index].edit_outer_pos(outer)
 
@@ -141,15 +135,10 @@ class History:
         return self.arr[index]
 
     def undo_history(self):
-        return self.arr.pop()        
-
-    def undo_to_first_history(self):
-        self.arr = [self.arr[0]]
-        self.print_history()
+        return self.arr.pop()
 
     def clear_history(self):
         self.arr = []
-        self.print_history()
     
     def print_history(self):
         print("------------------------------")
@@ -168,11 +157,6 @@ class Action:
         self.inner_pos_x = x
         self.inner_pos_y = y
         self.scored = scored
-
-    def record_lv2(self, x, y, outer_pos):
-        self.inner_pos_x = x
-        self.inner_pos_y = y
-        self.edit_outer_pos(outer_pos)
 
     def edit_outer_pos(self, outer_pos):
         self.outer_pos = outer_pos
