@@ -13,18 +13,19 @@ invalid_sound = pygame.mixer.Sound("Sprint1Story6.wav")
 
 
 class Button:
-    def __init__(self, x, y, width, height, text, font):
+    def __init__(self, x, y, width, height, text, font, danger=False):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.font = font
         self.is_hovered = False
+        self.danger = danger    #use red color for danger buttons like Quit
         
     def draw(self, screen):
         #determine button color
-        if self.is_hovered:
-            color = BUTTON_HOVER
+        if self.danger:
+            color = BUTTON_DANGER_HOVER if self.is_hovered else BUTTON_DANGER
         else:
-            color = BUTTON_NORMAL
+            color = BUTTON_HOVER if self.is_hovered else BUTTON_NORMAL
             
         #draw button
         pygame.draw.rect(screen, color, self.rect, border_radius=5)
@@ -44,7 +45,7 @@ class Button:
 
 
 class GameWindow:
-    def __init__(self, width=600, height=700):
+    def __init__(self, width=600, height=720):
         pygame.init()
         self.width = width
         self.height = height
@@ -75,16 +76,26 @@ class GameWindow:
         self._create_buttons()
         
     def _create_buttons(self):
-        #buttons at bottom of screen
-        btn_y = 600
-        btn_width = 80
+        #buttons at bottom of screen - centered layout
+        btn_width = 90
         btn_height = 35
+        btn_spacing = 15
         
-        self.btn_quit = Button(50, btn_y, btn_width, btn_height, "Quit", self.small_font)
-        self.btn_undo = Button(160, btn_y, btn_width, btn_height, "Undo", self.small_font)
-        self.btn_clear = Button(270, btn_y, btn_width, btn_height, "Clear", self.small_font)
+        #row 1: Undo and Clear (centered)
+        #board ends at ~610 for level 2 (120 offset + 7*70 cells), so start buttons at 620
+        row1_y = 620
+        row1_total_width = 2 * btn_width + btn_spacing
+        row1_start_x = (self.width - row1_total_width) // 2
         
-        self.buttons = [self.btn_quit, self.btn_undo, self.btn_clear]
+        self.btn_undo = Button(row1_start_x, row1_y, btn_width, btn_height, "Undo", self.small_font)
+        self.btn_clear = Button(row1_start_x + btn_width + btn_spacing, row1_y, btn_width, btn_height, "Clear", self.small_font)
+        
+        #row 2: Quit button (centered, red)
+        row2_y = row1_y + btn_height + 8
+        quit_x = (self.width - btn_width) // 2
+        self.btn_quit = Button(quit_x, row2_y, btn_width, btn_height, "Quit", self.small_font, danger=True)
+        
+        self.buttons = [self.btn_undo, self.btn_clear, self.btn_quit]
         
     def set_game_components(self, game_state, level1_logic, level2_logic):
         #set game components from main
@@ -139,8 +150,8 @@ class GameWindow:
             self.running = False
             return
         
-        #Should add undo functionality for lv1 by Sunday
-        if self.btn_undo.is_clicked(mouse_pos) and self.game_state.current_num != 1:
+        #undo - only allow if more than just "1" is placed (current_num > 2)
+        if self.btn_undo.is_clicked(mouse_pos) and self.game_state.current_num > 2:
             self.game_state.undo()
         
         #Will add clear functionality here later
@@ -230,9 +241,6 @@ class GameWindow:
         self._update_window_title()
         self.show_message("Level 1 Complete! Starting Level 2...")
         
-        #adjust renderer offset for 7x7 board
-        self.renderer.board_offset_x = 30
-        
     def _update_window_title(self):
         pygame.display.set_caption("Matrix Game - Level %d" % self.game_state.level)
         
@@ -240,10 +248,16 @@ class GameWindow:
         #clear screen
         self.screen.fill(WHITE)
         
-        #draw UI elements
-        self.renderer.draw_score(self.game_state.score)
-        self.renderer.draw_next_number(self.game_state.current_num)
-        self.renderer.draw_level_indicator(self.game_state.level)
+        #draw header bar
+        self.renderer.draw_header_bar(
+            self.game_state.score,
+            self.game_state.current_num,
+            self.game_state.level,
+            self.width
+        )
+        
+        #center board for current level
+        self.renderer.center_board(self.game_state.level)
         
         #draw board based on current level
         if self.game_state.level == 1:

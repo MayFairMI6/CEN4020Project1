@@ -5,17 +5,74 @@ from .colors import *
 
 
 class BoardRenderer:
-    def __init__(self, screen, cell_size=70, board_offset_x=50, board_offset_y=100):
+    def __init__(self, screen, cell_size=70, board_offset_y=120):
         self.screen = screen
         self.cell_size = cell_size
-        self.board_offset_x = board_offset_x
+        self.board_offset_x = 50      #will be recalculated for centering
         self.board_offset_y = board_offset_y
         self.font = None
         self.small_font = None
+        self.title_font = None
         
     def init_fonts(self):   #initialize fonts (must be called after pygame.init)
         self.font = pygame.font.Font(None, 36)
         self.small_font = pygame.font.Font(None, 24)
+        self.title_font = pygame.font.Font(None, 32)
+        
+    def center_board(self, level):
+        #calculate board offsets to center the board
+        #level 1 board is positioned where the inner board will be in level 2
+        window_width = self.screen.get_width()
+        window_height = self.screen.get_height()
+        board_width_7x7 = 7 * self.cell_size
+        board_height_7x7 = 7 * self.cell_size
+        
+        #vertical centering: between header (60px) and buttons (620px)
+        header_end = 60
+        buttons_start = 620
+        available_height = buttons_start - header_end
+        base_offset_y = header_end + (available_height - board_height_7x7) // 2
+        
+        #horizontal centering
+        base_offset_x = (window_width - board_width_7x7) // 2
+        
+        if level == 1:
+            #position level 1 board where inner board will be in level 2
+            self.board_offset_x = base_offset_x + self.cell_size
+            self.board_offset_y = base_offset_y + self.cell_size
+        else:
+            #level 2: position the full 7x7 grid centered
+            self.board_offset_x = base_offset_x
+            self.board_offset_y = base_offset_y
+        
+    def draw_header_bar(self, score, current_num, level, width):
+        #draw header bar with score, next number, and level
+        header_height = 60
+        
+        #draw header background
+        header_rect = pygame.Rect(0, 0, width, header_height)
+        pygame.draw.rect(self.screen, HEADER_BG, header_rect)
+        
+        #draw bottom border
+        pygame.draw.line(self.screen, GRID_LINE, (0, header_height), (width, header_height), 2)
+        
+        #score section (left)
+        score_label = self.small_font.render("SCORE", True, HEADER_LABEL)
+        score_value = self.title_font.render(str(score), True, SCORE_COLOR)
+        self.screen.blit(score_label, (30, 12))
+        self.screen.blit(score_value, (30, 32))
+        
+        #next number section (center)
+        next_label = self.small_font.render("NEXT NUMBER", True, HEADER_LABEL)
+        next_value = self.title_font.render(str(current_num), True, TEXT_DARK)
+        self.screen.blit(next_label, (width // 2 - 65, 12))
+        self.screen.blit(next_value, (width // 2 - 15, 32))
+        
+        #level section (right)
+        level_label = self.small_font.render("LEVEL", True, HEADER_LABEL)
+        level_value = self.title_font.render(str(level), True, LEVEL_COLOR)
+        self.screen.blit(level_label, (width - 80, 12))
+        self.screen.blit(level_value, (width - 62, 32))
         
     def draw_level1_board(self, board, last_pos=None, hover_cell=None):
         #draw 5x5 board for level 1
@@ -145,8 +202,10 @@ class BoardRenderer:
         text = self.font.render("Level %d" % level, True, TEXT_DARK)
         self.screen.blit(text, (x, y))
         
-    def draw_message(self, msg, y=550):
-        #draw message at bottom of screen
+    def draw_message(self, msg, y=None):
+        #draw message between board and buttons
+        if y is None:
+            y = self.screen.get_height() - 115   #position above buttons
         text = self.font.render(msg, True, TEXT_DARK)
         text_rect = text.get_rect(center=(self.screen.get_width() // 2, y))
         self.screen.blit(text, text_rect)

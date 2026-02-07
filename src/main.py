@@ -1,18 +1,5 @@
 #!/usr/bin/env python
 
-"""
-Matrix Game - Main Entry Point
-
-This is the main entry point for the Matrix Game with GUI.
-Run this file to start the game.
-
-Usage:
-    python src/main.py
-
-Controls:
-    - Click on cells to place numbers
-    - Press 'ESC' to quit
-"""
 
 import sys
 import os
@@ -42,7 +29,7 @@ def main():
     game_state.start_level1_with_random_one()
     
     #show welcome message
-    window.show_message("Welcome! Number 1 placed randomly. Place numbers 2-25!")
+    window.show_message("Welcome To The Matrix Game!")
     
     #run the game
     window.run()
