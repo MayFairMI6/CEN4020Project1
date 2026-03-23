@@ -12,6 +12,7 @@ from game_logic.level1 import Level1Logic
 from game_logic.level2 import Level2Logic
 from game_logic.level3 import Level3Logic
 from gui.window import GameWindow
+from gui.time_limit_screen import TimeLimitScreen
 from auth.user_manager import UserManager
 from auth.auth_screen import AuthScreen
 
@@ -28,6 +29,10 @@ def main():
         #user closed auth screen without logging in
         return
     
+    #User Story 11: show time-limit configuration screen
+    time_limit_screen = TimeLimitScreen()
+    time_limits = time_limit_screen.run()
+    
     #create game state
     game_state = GameState()
     
@@ -43,8 +48,14 @@ def main():
     #set authenticated player name
     window.set_player_name(username)
     
+    #User Story 11: apply chosen time limits
+    window.set_time_limits(time_limits)
+    
     #start game with random placement of 1 (User Story 1 requirement)
     game_state.start_level1_with_random_one()
+    
+    #User Story 11: start the timer for level 1
+    window.start_level_timer(1)
     
     #show welcome message with player name
     window.show_message(f"Welcome, {username}!")

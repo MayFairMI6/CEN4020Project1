@@ -44,8 +44,9 @@ class BoardRenderer:
             self.board_offset_x = base_offset_x
             self.board_offset_y = base_offset_y
         
-    def draw_header_bar(self, score, current_num, level, width):
-        #draw header bar with score, next number, and level
+    def draw_header_bar(self, score, current_num, level, width,
+                        time_left=None, is_overtime=False):
+        #draw header bar with score, next number, level, and optional timer
         header_height = 60
         
         #draw header background
@@ -66,6 +67,21 @@ class BoardRenderer:
         next_value = self.title_font.render(str(current_num), True, TEXT_DARK)
         self.screen.blit(next_label, (width // 2 - 65, 12))
         self.screen.blit(next_value, (width // 2 - 15, 32))
+        
+        #timer section (right of center, only when a time limit is active)
+        if time_left is not None:
+            if is_overtime:
+                t_label_text = "OVERTIME"
+                t_color = (220, 60, 60)
+                t_value_text = "+%ds" % time_left
+            else:
+                t_label_text = "TIME LEFT"
+                t_color = (40, 160, 80) if time_left > 10 else (220, 140, 40)
+                t_value_text = "%ds" % time_left
+            t_label = self.small_font.render(t_label_text, True, HEADER_LABEL)
+            t_value = self.title_font.render(t_value_text, True, t_color)
+            self.screen.blit(t_label, (width - 215, 12))
+            self.screen.blit(t_value, (width - 210, 32))
         
         #level section (right)
         level_label = self.small_font.render("LEVEL", True, HEADER_LABEL)

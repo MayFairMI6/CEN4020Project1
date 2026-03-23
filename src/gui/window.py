@@ -4,6 +4,7 @@ import pygame
 import sys
 from .board_renderer import BoardRenderer
 from .colors import *
+from .timer import Timer
 from .sound import valid_sound, invalid_sound
 #import completion logger for Story 7
 import sys
@@ -92,6 +93,14 @@ class GameWindow:
         self.level2_logged = False   #track if Level 2 completion was logged
         self.level3_logged = False
         
+        #User Story 11: per-level time limits (0 = no limit)
+        self.time_limits = {1: 0, 2: 0, 3: 0}
+        self.timers = {1: Timer(), 2: Timer(), 3: Timer()}
+        #flags to ensure score delta is applied exactly once per level
+        self.timer_score_applied = {1: False, 2: False, 3: False}
+        #flag to show "Time's up!" message only once per level
+        self.timer_expired_shown = {1: False, 2: False, 3: False}
+        
         #set player name after authentication
         self.player_name = "Player"
         
@@ -154,6 +163,40 @@ class GameWindow:
     def set_player_name(self, name):
         #set authenticated player name
         self.player_name = name
+
+    def set_time_limits(self, limits: dict):
+        """Store per-level time limits and reset tracking state.
+        limits: {1: int, 2: int, 3: int}  –  0 means no time limit.
+        """
+        self.time_limits = {1: limits.get(1, 0),
+                            2: limits.get(2, 0),
+                            3: limits.get(3, 0)}
+        self.timer_score_applied = {1: False, 2: False, 3: False}
+        self.timer_expired_shown  = {1: False, 2: False, 3: False}
+
+    def start_level_timer(self, level: int):
+        """Start the countdown timer for *level* if a limit was configured."""
+        limit = self.time_limits.get(level, 0)
+        if limit > 0:
+            self.timers[level].start(limit)
+
+    def _apply_timer_score(self, level: int):
+        """Stop the timer for *level* and apply its bonus/penalty to the score."""
+        if self.timer_score_applied[level]:
+            return
+        limit = self.time_limits.get(level, 0)
+        if limit == 0:
+            return
+        timer = self.timers[level]
+        if timer.running:
+            timer.stop()
+        delta = timer.calculate_score()
+        self.game_state.score += delta
+        self.timer_score_applied[level] = True
+        if delta > 0:
+            self.show_message("Time bonus: +%d pts!" % delta, 3000)
+        elif delta < 0:
+            self.show_message("Time penalty: %d pts!" % delta, 3000)
         
     def show_message(self, msg, duration=2000):
         #display a temporary message
@@ -334,14 +377,30 @@ class GameWindow:
         #clear message if timer expired
         if self.message and pygame.time.get_ticks() > self.message_timer:
             self.message = ""
+        
+        #User Story 11: warn player once when the timer hits zero
+        level = self.game_state.level
+        if not self.game_state.win:
+            limit = self.time_limits.get(level, 0)
+            if limit > 0 and not self.timer_expired_shown[level]:
+                timer = self.timers[level]
+                if timer.running and timer.left() == 0:
+                    self.show_message("Time's up! Extra seconds cost points.", 3000)
+                    self.timer_expired_shown[level] = True
             
         #check for level transition
         if self.game_state.level == 1 and self.game_state.win:
+            self._apply_timer_score(1)
             self._transition_to_level2()
         
         #log Level 2 completion (Story 7)
         if self.game_state.level == 2 and self.game_state.win:
+            self._apply_timer_score(2)
             self._transition_to_level3()
+        
+        #apply timer score when level 3 is completed
+        if self.game_state.level == 3 and self.game_state.win:
+            self._apply_timer_score(3)
               
     def _log_completion(self, level):
         #log game completion for Story 7 with human-readable board format
@@ -379,6 +438,9 @@ class GameWindow:
         self.game_state.start_level2(completed_board)
         self._update_window_title()
         self.show_message("Level 1 Complete! Starting Level 2...")
+        
+        #User Story 11: start timer for the new level
+        self.start_level_timer(2)
     
     def _transition_to_level3(self):
         if not self.level2_logged:
@@ -391,6 +453,9 @@ class GameWindow:
         self.game_state.start_level3(completed_ring)
         self._update_window_title()
         self.show_message("Level 2 Complete! Starting Level 3...")
+        
+        #User Story 11: start timer for the new level
+        self.start_level_timer(3)
     
     def _update_window_title(self):
         pygame.display.set_caption("Matrix Game - Level %d" % self.game_state.level)
@@ -399,12 +464,29 @@ class GameWindow:
         #clear screen
         self.screen.fill(WHITE)
         
+        #User Story 11: compute timer display values for the header
+        level = self.game_state.level
+        time_left_display = None
+        is_overtime = False
+        limit = self.time_limits.get(level, 0)
+        if limit > 0:
+            timer = self.timers[level]
+            left = timer.left()
+            if left is not None and left > 0:
+                time_left_display = left
+                is_overtime = False
+            elif timer.running or timer.has_run():
+                time_left_display = timer.overtime()
+                is_overtime = True
+        
         #draw header bar
         self.renderer.draw_header_bar(
             self.game_state.score,
             self.game_state.current_num,
             self.game_state.level,
-            self.width
+            self.width,
+            time_left=time_left_display,
+            is_overtime=is_overtime
         )
         
         #center board for current level
